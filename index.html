@@ -109,23 +109,20 @@ function submitDiagnosis() {
     userInfo: currentUser ? { userId: currentUser.userId, displayName: currentUser.displayName } : { userId: 'anonymous' }
   };
 
-  // 2. GASにデータを投げる
+  // 2. GASにデータを投げる（返事は待たない！）
+  // .then() や .catch() は書かずに、投げっぱなしにします
   fetch(GAS_API_URL, {
     method: 'POST',
-    mode: 'no-cors', // ★ここがポイント（返事を待たないモード）
+    mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
-  })
-  .then(() => {
-    // 3. 送信したら、すぐに「完了画面」を出す
-    // （GASからの返事を待つとフリーズするので、待たずに画面を変える）
-    showCompleteScreen();
-  })
-  .catch(err => {
-    // エラーでもとりあえず完了画面へ（ユーザーを安心させるため）
-    console.error(err);
-    showCompleteScreen();
   });
+
+  // 3. ★ここがポイント！
+  // 通信の結果に関係なく、2.5秒後に強制的に「完了画面」へ飛ばす
+  setTimeout(function() {
+    showCompleteScreen();
+  }, 2500);
 }
 
 // 完了画面の表示
@@ -133,7 +130,7 @@ function showCompleteScreen() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('result').style.display = 'block';
   
-  // 文言を書き換え
+  // 画面の文言
   document.getElementById('ai-message').innerText = "診断結果をLINEに送信しました📩\nトーク画面に戻って確認してください。";
   document.getElementById('result-level').innerText = "送信完了";
 }
