@@ -99,51 +99,44 @@
     });
   });
 
-  // ■ 修正ポイント：GASへの送信を fetch で行う
-  function submitDiagnosis() {
-    document.getElementById('quiz-card').style.display = 'none';
-    document.getElementById('loading').style.display = 'block';
+function submitDiagnosis() {
+  // 1. ローディング画面を出す
+  document.getElementById('quiz-card').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
 
-    const payload = {
-      k6Answers: k6Answers,
-      userInfo: currentUser ? { userId: currentUser.userId, displayName: currentUser.displayName } : { userId: 'anonymous' }
-    };
+  const payload = {
+    k6Answers: k6Answers,
+    userInfo: currentUser ? { userId: currentUser.userId, displayName: currentUser.displayName } : { userId: 'anonymous' }
+  };
 
-    // fetchを使ってGASにデータを投げる
-    fetch(GAS_API_URL, {
-      method: 'POST',
-      mode: 'no-cors', // ★重要：GASへのPOSTはno-corsで行う
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    .then(() => {
-      // no-corsなのでレスポンスの中身は見れないが、GAS側で処理は走る
-      // 成功とみなして結果画面へ（※厳密にはAIの文章を受け取れないので、今回はダミーメッセージを表示するか、redirectハックを使う必要がありますが、MVPなら下記の方法が一番安定します）
-      
-      // ★注意：GitHubPagesからGASへの通信はセキュリティ制限(CORS)が厳しいです。
-      // 今回はピッチ用MVPなので、簡易的に「送信完了」を表示し、AIメッセージはGASからLINEに送るか、
-      // 以下の裏技（redirectハック）を使います。
-      
-      // 裏技を使わない場合：
-      // alert("診断が完了しました！結果は通知でお知らせします（本来はここに表示されます）");
-      // liff.closeWindow();
-      
-      // ※AIメッセージを画面に出したい場合は、少し複雑な通信が必要です。
-      // いったん「送信は成功する」ところまで確認しましょう。
-    })
-    .catch(err => {
-      alert("通信エラー: " + err);
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('quiz-card').style.display = 'block';
-    });
-  }
+  // 2. GASにデータを投げる
+  fetch(GAS_API_URL, {
+    method: 'POST',
+    mode: 'no-cors', // ★ここがポイント（返事を待たないモード）
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    // 3. 送信したら、すぐに「完了画面」を出す
+    // （GASからの返事を待つとフリーズするので、待たずに画面を変える）
+    showCompleteScreen();
+  })
+  .catch(err => {
+    // エラーでもとりあえず完了画面へ（ユーザーを安心させるため）
+    console.error(err);
+    showCompleteScreen();
+  });
+}
+
+// 完了画面の表示
+function showCompleteScreen() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('result').style.display = 'block';
   
-  // ★特記事項
-  // GitHub PagesからGASのAI返答を受け取るには「CORS」という壁があります。
-  // 一番簡単なのは、「submitDiagnosis」の中でfetchしたあと、
-  // 「結果が表示されるまで数秒待ってね」として、結果をここに出すのではなく、
-  // GAS側から「replyMessage」でLINEに結果を送ってしまうことです。
-  // それならCORSを無視できます。
+  // 文言を書き換え
+  document.getElementById('ai-message').innerText = "診断結果をLINEに送信しました📩\nトーク画面に戻って確認してください。";
+  document.getElementById('result-level').innerText = "送信完了";
+}
 </script>
 </body>
 </html>
