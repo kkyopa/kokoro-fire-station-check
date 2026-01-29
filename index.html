@@ -54,11 +54,12 @@
     
     <div id="result" class="card mt-3" style="display:none;">
       <div class="result-box text-start">
+        <div style="background:#8b4513;color:white;padding:4px 15px;border-radius:20px;display:inline-block;margin-bottom:15px;font-size:0.8rem;">診断結果</div>
         <span style="font-size:1.5rem;display:block;margin-bottom:10px;">🍀</span>
         <p id="ai-message" style="line-height:1.8;font-size:0.95rem;color:#5d4037;white-space:pre-wrap;"></p>
       </div>
       <div class="d-grid gap-2 mt-4">
-        <button class="btn btn-outline-secondary rounded-pill py-2" onclick="liff.closeWindow()">閉じる</button>
+        <button class="btn btn-outline-secondary rounded-pill py-2" onclick="handleClose()">閉じる</button>
       </div>
     </div>
   </div>
@@ -96,6 +97,20 @@
       document.getElementById('submit-btn').disabled = !isK6Ok;
     });
   });
+
+
+function handleClose() {
+  // LINEアプリ内で開いている場合
+  if (liff.isInClient()) {
+    liff.closeWindow();
+  } 
+  // ブラウザ（PCなど）で開いている場合
+  else {
+    alert("LINEアプリ内であれば、ここで画面が閉じます。\n(現在はブラウザのため閉じられません)");
+    // ブラウザのタブを閉じようと試みる（セキュリティ上、効かないことが多いですが一応記述）
+    window.close();
+  }
+}
 
 function submitDiagnosis() {
   // 1. ローディング画面を出す
